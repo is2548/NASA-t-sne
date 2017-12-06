@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="http://d3js.org/d3.v4.min.js"></script>
+    <style>
+        body {
+            font: 16px sans-serif;
+        }
+
+        circle {
+            stroke: #000;
+        }
+    </style>
+</head>
+<body>
+<audio class="audio-player">
+    <source class="audio-source" src="/" type="audio/ogg">
+</audio>
+<script src="http://d3js.org/d3.v4.min.js"></script>
+<script>
+    var width = 1200;
+    var height = 800;
+
+
+    var color = d3.scaleOrdinal(d3.schemeCategory10);
+
+
+    var svg = d3.select("body").append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+    d3.csv("../data/_processed/result.csv", function(error, data) {
+        if (error) throw error;
+
+        data.forEach(function(d) {
+            d.x = +d.x;
+            d.y = +d.y;
+        });
+
+        var scaleX = d3.scaleLinear()
+            .range([0, width]);
+        var scaleY = d3.scaleLinear()
+        .range([0, height]);
+        scaleX.domain(d3.extent(data, function(d) { return d.x; })).nice();
+        scaleY.domain(d3.extent(data, function(d) { return d.y; })).nice();
+
+        svg_group = svg.selectAll("g")
+            .data(data)
+            .enter().append("g");
+
+        svg_group.append("circle")
+            .attr("class", "dot")
+            .attr("r", 7)
+            .attr("cx", function(d) { return scaleX(d.x); })
+            .attr("cy", function(d) { return scaleY(d.y); })
+            .attr("data-filename", function(d) { return d.name; })
+            .attr("data-sound-type", function(d) { return d.sound; })
+            .style("fill", function(d) { return color(d.sound); })
+            .append("title")
+            .text(function(d) { return d.name; });
+
+        var legend = svg.selectAll(".legend")
+            .data(color.domain())
+            .enter().append("g")
+            .attr("class", "legend")
+            .attr("transform", function(d, i) {
+                return "translate(0," + (700 + i * 20)+ ")";
+            });
+
+        legend.append("rect")
+            .attr("x", width - 18)
+            .attr("width", 18)
+            .attr("height", 18)
+            .style("fill", color);
+
+        legend.append("text")
+            .attr("x", width - 24)
+            .attr("y", 9)
+            .attr("dy", ".35em")
+            .style("text-anchor", "end")
+            .text(function(d) { return d; });
+    });
+
+
+    $(function () {
+        var $audioPlayer = $(".audio-player");
+        var $source = $(".audio-source");
+        $("circle").click(function(e){
+            if ($audioPlayer[0].paused == false) {
+                $audioPlayer.trigger("pause");
+            }
+            path = '../data/' + this.dataset.soundType + "/" + this.dataset.filename;
+            $source.attr("src", path);
+            $audioPlayer.trigger("load");
+            $audioPlayer.trigger("play");
+        })
+    })
+
+</script>
